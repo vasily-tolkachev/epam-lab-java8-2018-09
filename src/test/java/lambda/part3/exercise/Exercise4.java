@@ -20,15 +20,15 @@ class Exercise4 {
 
     private static class LazyCollectionHelper<T, R> {
         private final List<T> source;
-        private final Function<T, List<R>> function;
+        private final Function<List<T>, List<R>> function;
 
-        private LazyCollectionHelper(List<T> source, Function<T, List<R>> function) {
+        private LazyCollectionHelper(List<T> source, Function<List<T>, List<R>> function) {
             this.source = source;
             this.function = function;
         }
 
         public static <T> LazyCollectionHelper<T, T> from(List<T> list) {
-            return new LazyCollectionHelper<>(list, Collections::singletonList);
+            return new LazyCollectionHelper<>(list, l -> l);
         }
 
         public <U> LazyCollectionHelper<T, U> flatMap(Function<R, List<U>> flatMapping) {
@@ -40,18 +40,15 @@ class Exercise4 {
         }
 
         public List<R> force() {
-            List<R> result = new ArrayList<>();
-            source.forEach(t -> result.addAll(function.apply(t)));
-            return result;
+            return function.apply(source);
         }
 
         private <U> LazyCollectionHelper<T, U> getCollectionHelperWithNewFunction(BiConsumer<List<U>, R> adder) {
-            Function<T, List<U>> newFunction = this.function.andThen(list -> {
+            return new LazyCollectionHelper<>(source, this.function.andThen(list -> {
                 List<U> listU = new ArrayList<>();
                 list.forEach(r -> adder.accept(listU, r));
                 return listU;
-            });
-            return new LazyCollectionHelper<>(source, newFunction);
+            }));
         }
     }
 
