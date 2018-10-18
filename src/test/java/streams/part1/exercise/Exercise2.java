@@ -6,10 +6,12 @@ import lambda.data.Person;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.comparingInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @SuppressWarnings({"ConstantConditions", "unused"})
@@ -19,7 +21,10 @@ class Exercise2 {
     void calcAverageAgeOfEmployees() {
         List<Employee> employees = getEmployees();
 
-        Double expected = null;
+        Double expected = employees.stream()
+                .map(Employee::getPerson)
+                .mapToInt(Person::getAge)
+                .average().getAsDouble();
 
         assertThat(expected, Matchers.closeTo(33.66, 0.1));
     }
@@ -28,7 +33,11 @@ class Exercise2 {
     void findPersonWithLongestFullName() {
         List<Employee> employees = getEmployees();
 
-        Person expected = null;
+        Comparator<Person> comparator = comparingInt(person -> person.getFullName().length());
+
+        Person expected = employees.stream()
+                .map(Employee::getPerson)
+                .max(comparator).get();
 
         assertThat(expected, Matchers.is(employees.get(1).getPerson()));
     }
@@ -37,7 +46,16 @@ class Exercise2 {
     void findEmployeeWithMaximumDurationAtOnePosition() {
         List<Employee> employees = getEmployees();
 
-        Employee expected = null;
+        Employee expected = employees.stream()
+                .collect(Collectors.toMap(Function.identity(), employee -> employee.getJobHistory()
+                        .stream()
+                        .collect(Collectors.toMap(JobHistoryEntry::getPosition, JobHistoryEntry::getDuration,
+                                (duration1, duration2) -> duration1 + duration2))
+                        .entrySet().stream()
+                        .max(comparing(Map.Entry::getValue)).get().getValue()
+                ))
+                .entrySet().stream()
+                .max(comparingInt(Map.Entry::getValue)).get().getKey();
 
         assertThat(expected, Matchers.is(employees.get(4)));
     }
