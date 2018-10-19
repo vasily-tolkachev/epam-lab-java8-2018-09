@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
@@ -69,7 +70,15 @@ class Exercise2 {
     void calcTotalSalaryWithCoefficientWorkExperience() {
         List<Employee> employees = getEmployees();
 
-        Double expected = null;
+        Double BASE_SALARY = 75_000.0;
+        Double COEFFICIENT = 0.2;
+
+        Predicate<List<JobHistoryEntry>> hasCoefficient = entry -> entry.get(entry.size() - 1).getDuration() > 3;
+
+        Double expected = employees.stream()
+                .map(employee -> hasCoefficient.test(employee.getJobHistory()))
+                .mapToDouble(b -> b ? BASE_SALARY + BASE_SALARY * COEFFICIENT : BASE_SALARY)
+                .sum();
 
         assertThat(expected, Matchers.closeTo(465000.0, 0.001));
     }
